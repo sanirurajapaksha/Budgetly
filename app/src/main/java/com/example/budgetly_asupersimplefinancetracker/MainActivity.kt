@@ -20,10 +20,10 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        val navController = findNavController(R.id.nav_host_fragment)
-        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-
-        bottomNavigationView.setupWithNavController(navController)
+//        val navController = findNavController(R.id.nav_host_fragment)
+//        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+//
+//        bottomNavigationView.setupWithNavController(navController)
 
     }
 }
