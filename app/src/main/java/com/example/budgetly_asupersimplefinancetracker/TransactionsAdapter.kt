@@ -7,8 +7,11 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
+import java.util.Date
 
+// Model of Transaction
 data class Transaction(
+    val id: String = System.currentTimeMillis().toString(),
     val title: String,
     val amount: Double,
     val date: String,

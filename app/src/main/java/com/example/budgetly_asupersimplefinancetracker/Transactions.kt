@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ListView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -53,41 +52,46 @@ class Transactions : Fragment() {
         // Sample transactions data
         val transactions = listOf(
             Transaction(
-                "Grocery Shopping",
-                24.99,
-                "Today, 2:30 PM",
-                "food"
+                title = "Grocery Shopping",
+                amount = 24.99,
+                date = "Today, 2:30 PM",
+                category = "food",
+                isExpense = true
             ),
             Transaction(
-                "Bus Ticket",
-                3.50,
-                "Today, 1:15 PM",
-                "transport"
+                title = "Bus Ticket",
+                amount = 3.50,
+                date = "Today, 1:15 PM",
+                category = "transport",
+                isExpense = true
             ),
             Transaction(
-                "Rent Payment",
-                1200.00,
-                "Yesterday",
-                "housing"
+                title = "Rent Payment",
+                amount = 1200.00,
+                date = "Yesterday",
+                category = "housing",
+                isExpense = true
             ),
             Transaction(
-                "Salary Deposit",
-                3000.00,
-                "Mar 1, 2024",
-                "salary",
-                false
+                title = "Salary Deposit",
+                amount = 3000.00,
+                date = "Mar 1, 2024",
+                category = "salary",
+                isExpense = false
             ),
             Transaction(
-                "Coffee Shop",
-                5.75,
-                "Mar 1, 2024",
-                "food"
+                title = "Coffee Shop",
+                amount = 5.75,
+                date = "Mar 1, 2024",
+                category = "food",
+                isExpense = true
             ),
             Transaction(
-                "Pharmacy",
-                32.50,
-                "Feb 29, 2024",
-                "health"
+                title = "Pharmacy",
+                amount = 32.50,
+                date = "Feb 29, 2024",
+                category = "health",
+                isExpense = true
             )
         )
 

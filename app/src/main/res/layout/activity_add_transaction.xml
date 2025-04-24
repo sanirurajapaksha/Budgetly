@@ -15,7 +15,6 @@
         android:elevation="4dp"
         app:title="Add Transaction"
         app:navigationIcon="@drawable/ic_close"
-        app:menu="@menu/add_transaction_menu"
         android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"/>
 
     <!-- Content -->
@@ -128,23 +127,14 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Notes -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/notes_layout"
+            <!-- Add Transaction Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/add_transaction_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="Notes (Optional)"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/notes_edit_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="textMultiLine"
-                    android:minLines="3"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
+                android:text="Add Transaction"
+                android:layout_marginTop="16dp"
+                style="@style/Widget.MaterialComponents.Button"/>
 
         </LinearLayout>
     </ScrollView>

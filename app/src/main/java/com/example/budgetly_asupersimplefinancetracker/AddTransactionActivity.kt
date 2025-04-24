@@ -7,6 +7,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.textfield.TextInputEditText
 import java.text.SimpleDateFormat
@@ -19,7 +20,8 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var titleEditText: TextInputEditText
     private lateinit var categoryDropdown: AutoCompleteTextView
     private lateinit var dateEditText: TextInputEditText
-    private lateinit var notesEditText: TextInputEditText
+    private lateinit var addTransactionButton: MaterialButton
+    private lateinit var transactionManager: TransactionManager
 
     private val calendar = Calendar.getInstance()
     private val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -28,11 +30,13 @@ class AddTransactionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
 
+        transactionManager = TransactionManager(this)
         initializeViews()
         setupToolbar()
         setupCategoryDropdown()
         setupDatePicker()
         setupTypeToggle()
+        setupAddTransactionButton()
     }
 
     private fun initializeViews() {
@@ -42,7 +46,7 @@ class AddTransactionActivity : AppCompatActivity() {
         titleEditText = findViewById(R.id.title_edit_text)
         categoryDropdown = findViewById(R.id.category_dropdown)
         dateEditText = findViewById(R.id.date_edit_text)
-        notesEditText = findViewById(R.id.notes_edit_text)
+        addTransactionButton = findViewById(R.id.add_transaction_button)
 
         // Set current date as default
         dateEditText.setText(dateFormatter.format(calendar.time))
@@ -56,15 +60,11 @@ class AddTransactionActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener {
             finish()
         }
+    }
 
-        toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_save -> {
-                    saveTransaction()
-                    true
-                }
-                else -> false
-            }
+    private fun setupAddTransactionButton() {
+        addTransactionButton.setOnClickListener {
+            saveTransaction()
         }
     }
 
@@ -117,8 +117,20 @@ class AddTransactionActivity : AppCompatActivity() {
             return
         }
 
-        // TODO: Save transaction to database
-        Toast.makeText(this, "Transaction saved", Toast.LENGTH_SHORT).show()
-        finish()
+        try {
+            val transaction = Transaction(
+                title = title,
+                amount = amount.toDouble(),
+                date = dateFormatter.format(calendar.time),
+                category = category,
+                isExpense = typeToggleGroup.checkedButtonId == R.id.expense_button
+            )
+
+            transactionManager.saveTransaction(transaction)
+            Toast.makeText(this, "Transaction saved successfully", Toast.LENGTH_SHORT).show()
+            finish()
+        } catch (e: NumberFormatException) {
+            Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show()
+        }
     }
 } 
