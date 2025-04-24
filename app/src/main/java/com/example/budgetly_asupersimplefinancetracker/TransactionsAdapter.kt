@@ -4,10 +4,9 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
-import java.util.Date
+import androidx.recyclerview.widget.RecyclerView
 
 // Model of Transaction
 data class Transaction(
@@ -19,36 +18,44 @@ data class Transaction(
     val isExpense: Boolean = true
 )
 
-class TransactionsAdapter(context: Context, transactions: List<Transaction>) :
-    ArrayAdapter<Transaction>(context, 0, transactions) {
+class TransactionsAdapter(private val context: Context, private var transactions: List<Transaction>) :
+    RecyclerView.Adapter<TransactionsAdapter.TransactionViewHolder>() {
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-        // Get the transaction for this position
-        val transaction = getItem(position)!!
+    // ViewHolder that hold the basic layout for each items
 
-        // Check if an existing view is being reused, otherwise inflate the view
-        val view = convertView ?: LayoutInflater.from(context)
+    class TransactionViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val categoryIcon: ImageView = view.findViewById(R.id.category_icon)
+        val title: TextView = view.findViewById(R.id.transaction_title)
+        val date: TextView = view.findViewById(R.id.transaction_date)
+        val amount: TextView = view.findViewById(R.id.transaction_amount)
+    }
+
+    // Putting the actual view into the ViewHolder
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TransactionViewHolder {
+        val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_transaction, parent, false)
+        return TransactionViewHolder(view)
+    }
 
-        // Get views
-        val categoryIcon = view.findViewById<ImageView>(R.id.category_icon)
-        val title = view.findViewById<TextView>(R.id.transaction_title)
-        val date = view.findViewById<TextView>(R.id.transaction_date)
-        val amount = view.findViewById<TextView>(R.id.transaction_amount)
+    // Binding the data to the view
+
+    override fun onBindViewHolder(holder: TransactionViewHolder, position: Int) {
+        val transaction = transactions[position]
 
         // Set data
-        title.text = transaction.title
-        date.text = transaction.date
+        holder.title.text = transaction.title
+        holder.date.text = transaction.date
 
         // Format amount with currency symbol and color
         val amountText = if (transaction.isExpense) {
-            amount.setTextColor(context.getColor(android.R.color.holo_red_light))
+            holder.amount.setTextColor(context.getColor(android.R.color.holo_red_light))
             "-$%.2f".format(transaction.amount)
         } else {
-            amount.setTextColor(context.getColor(android.R.color.holo_green_dark))
+            holder.amount.setTextColor(context.getColor(android.R.color.holo_green_dark))
             "+$%.2f".format(transaction.amount)
         }
-        amount.text = amountText
+        holder.amount.text = amountText
 
         // Set category icon based on category
         val iconResId = when (transaction.category.lowercase()) {
@@ -60,8 +67,13 @@ class TransactionsAdapter(context: Context, transactions: List<Transaction>) :
             "health" -> R.drawable.health
             else -> R.drawable.shopping
         }
-        categoryIcon.setImageResource(iconResId)
-
-        return view
+        holder.categoryIcon.setImageResource(iconResId)
     }
-} 
+
+    override fun getItemCount() = transactions.size
+
+    fun updateTransactions(newTransactions: List<Transaction>) {
+        transactions = newTransactions
+        notifyDataSetChanged()
+    }
+}

@@ -1,13 +1,19 @@
 package com.example.budgetly_asupersimplefinancetracker
 
 import android.content.Intent
+import android.graphics.Canvas
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ListView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -24,8 +30,10 @@ class Transactions : Fragment() {
     private var param1: String? = null
     private var param2: String? = null
 
-    private lateinit var listView: ListView
+    private lateinit var recyclerView: RecyclerView
     private lateinit var fabAddTransaction: FloatingActionButton
+    private lateinit var transactionManager: TransactionManager
+    private lateinit var adapter: TransactionsAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,65 +54,98 @@ class Transactions : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        listView = view.findViewById(R.id.transactions_list_view)
+        recyclerView = view.findViewById(R.id.transactions_recycler_view)
         fabAddTransaction = view.findViewById(R.id.fab_add_transaction)
+        transactionManager = TransactionManager(requireContext())
 
-        // Sample transactions data
-        val transactions = listOf(
-            Transaction(
-                title = "Grocery Shopping",
-                amount = 24.99,
-                date = "Today, 2:30 PM",
-                category = "food",
-                isExpense = true
-            ),
-            Transaction(
-                title = "Bus Ticket",
-                amount = 3.50,
-                date = "Today, 1:15 PM",
-                category = "transport",
-                isExpense = true
-            ),
-            Transaction(
-                title = "Rent Payment",
-                amount = 1200.00,
-                date = "Yesterday",
-                category = "housing",
-                isExpense = true
-            ),
-            Transaction(
-                title = "Salary Deposit",
-                amount = 3000.00,
-                date = "Mar 1, 2024",
-                category = "salary",
-                isExpense = false
-            ),
-            Transaction(
-                title = "Coffee Shop",
-                amount = 5.75,
-                date = "Mar 1, 2024",
-                category = "food",
-                isExpense = true
-            ),
-            Transaction(
-                title = "Pharmacy",
-                amount = 32.50,
-                date = "Feb 29, 2024",
-                category = "health",
-                isExpense = true
-            )
-        )
+        // Set up RecyclerView
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        adapter = TransactionsAdapter(requireContext(), emptyList())
+        recyclerView.adapter = adapter
 
-        // Set up adapter with sample data
-        context?.let {
-            listView.adapter = TransactionsAdapter(it, transactions)
+        // Set up swipe to delete
+        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+
+                // Get the position of the item being swiped and then get the ID of it to delete from SharedPreferences
+                val position = viewHolder.adapterPosition
+                val transactions = transactionManager.getTransactions()
+                val transaction = transactions[position]
+                
+                // Delete from SharedPreferences
+                transactionManager.deleteTransaction(transaction.id)
+                
+                // Update adapter with new list
+                val updatedTransactions = transactionManager.getTransactions()
+                adapter.updateTransactions(updatedTransactions)
+
+                // Show undo snackbar
+                Snackbar.make(recyclerView, "Transaction deleted", Snackbar.LENGTH_LONG)
+                    .setAction("Undo") {
+                        // Restore the transaction
+                        transactionManager.saveTransaction(transaction)
+                        val restoredTransactions = transactionManager.getTransactions()
+                        adapter.updateTransactions(restoredTransactions)
+                    }
+                    .show()
+            }
+
+            // Handles the red background with the trash icon on swipe
+
+            override fun onChildDraw(
+                c: Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                RecyclerViewSwipeDecorator.Builder(
+                    c,
+                    recyclerView,
+                    viewHolder,
+                    dX,
+                    dY,
+                    actionState,
+                    isCurrentlyActive
+                )
+                    .addBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_light))
+                    .addActionIcon(android.R.drawable.ic_menu_delete)
+                    .create()
+                    .decorate()
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+            }
         }
+
+        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+        itemTouchHelper.attachToRecyclerView(recyclerView)
+
+        // Get transactions from SharedPreferences
+        val transactions = transactionManager.getTransactions()
+        adapter.updateTransactions(transactions)
 
         // Handle FAB click
         fabAddTransaction.setOnClickListener {
             val intent = Intent(context, AddTransactionActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh the list when returning from AddTransactionActivity
+        val transactions = transactionManager.getTransactions()
+        adapter.updateTransactions(transactions)
     }
 
     companion object {

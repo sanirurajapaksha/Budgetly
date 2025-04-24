@@ -22,6 +22,12 @@ class TransactionManager(private val context: Context) {
         return gson.fromJson(json, type) ?: emptyList()
     }
 
+    fun deleteTransaction(transactionId: String){
+        val transactions = getTransactions().toMutableList()
+        transactions.removeAll { it.id == transactionId }
+        saveTransactions(transactions)
+    }
+
     private fun saveTransactions(transactions: List<Transaction>) {
         val json = gson.toJson(transactions)
         sharedPreferences.edit().putString(transactionsKey, json).apply()
