@@ -34,9 +34,10 @@
 
         <!-- Spending Section -->
         <TextView
+            android:id="@+id/spending_title_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Spending $364"
+            android:text="Spending $0"
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="16dp" />
@@ -79,9 +80,10 @@
                         android:textSize="12sp" />
 
                     <TextView
+                        android:id="@+id/food_amount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$21"
+                        android:text="$0"
                         android:textStyle="bold" />
 
                     <View
@@ -122,9 +124,10 @@
                         android:textSize="12sp" />
 
                     <TextView
+                        android:id="@+id/transportation_amount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$53"
+                        android:text="$0"
                         android:textStyle="bold" />
 
                     <View
@@ -165,9 +168,10 @@
                         android:textSize="12sp" />
 
                     <TextView
+                        android:id="@+id/housing_amount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$27"
+                        android:text="$0"
                         android:textStyle="bold" />
 
                     <View
@@ -208,9 +212,10 @@
                         android:textSize="12sp" />
 
                     <TextView
+                        android:id="@+id/personal_care_amount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$55"
+                        android:text="$0"
                         android:textStyle="bold" />
 
                     <View
@@ -251,9 +256,10 @@
                         android:textSize="12sp" />
 
                     <TextView
+                        android:id="@+id/shopping_amount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$200"
+                        android:text="$0"
                         android:textStyle="bold" />
 
                     <View
@@ -294,9 +300,10 @@
                         android:textSize="12sp" />
 
                     <TextView
+                        android:id="@+id/health_care_amount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$7"
+                        android:text="$0"
                         android:textStyle="bold" />
 
                     <View
@@ -310,6 +317,7 @@
 
         <!-- Income Section -->
         <TextView
+            android:id="@+id/income_title_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Income $1267"
@@ -353,6 +361,7 @@
                         android:textSize="12sp" />
 
                     <TextView
+                        android:id="@+id/salary_amount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="$1000"
@@ -396,6 +405,7 @@
                         android:textSize="12sp" />
 
                     <TextView
+                        android:id="@+id/investment_amount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="$267"

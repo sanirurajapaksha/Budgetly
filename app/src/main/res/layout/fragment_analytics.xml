@@ -147,13 +147,26 @@
                     android:text="Savings Rate: 0%"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="#4CAF50" />
+                    android:textColor="#4CAF50"
+                    android:layout_marginBottom="16dp" />
 
-                <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/trend_line_chart"
+                <TextView
+                    android:id="@+id/expense_ratio_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Expense Ratio: 0%"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp" />
+
+                <ProgressBar
+                    android:id="@+id/expense_ratio_bar"
+                    style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                     android:layout_width="match_parent"
-                    android:layout_height="250dp"
-                    android:layout_marginTop="16dp" />
+                    android:layout_height="12dp"
+                    android:progress="0"
+                    android:progressTint="#4CAF50"
+                    android:background="#E0E0E0" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

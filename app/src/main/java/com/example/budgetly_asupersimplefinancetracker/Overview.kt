@@ -29,6 +29,9 @@ class Overview : Fragment() {
     private lateinit var transactionManager: TransactionManager
     private lateinit var recentTransactionsContainer: ViewGroup
     private lateinit var recentTransactionsCard: MaterialCardView
+    private lateinit var spendingTitleText: TextView
+    private lateinit var incomeTitleText: TextView
+    private lateinit var categoryAmounts: Map<String, TextView>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,21 +53,80 @@ class Overview : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         transactionManager = TransactionManager(requireContext())
+        initializeViews(view)
+        setupClickListeners()
+        updateAllData()
+    }
+
+    private fun initializeViews(view: View) {
         recentTransactionsContainer = view.findViewById(R.id.recent_transactions_container)
         recentTransactionsCard = view.findViewById(R.id.recent_transactions_card)
+        spendingTitleText = view.findViewById(R.id.spending_title_text)
+        incomeTitleText = view.findViewById(R.id.income_title_text)
 
-        // Set click listener to navigate to Transactions tab using bottom navigation
+        // Initialize category amount TextViews
+        categoryAmounts = mapOf(
+            "food & drink" to view.findViewById(R.id.food_amount),
+            "transportation" to view.findViewById(R.id.transportation_amount),
+            "housing" to view.findViewById(R.id.housing_amount),
+            "personal care" to view.findViewById(R.id.personal_care_amount),
+            "shopping" to view.findViewById(R.id.shopping_amount),
+            "health care" to view.findViewById(R.id.health_care_amount),
+            "salary" to view.findViewById(R.id.salary_amount),
+            "investment" to view.findViewById(R.id.investment_amount)
+        )
+    }
+
+    private fun setupClickListeners() {
         recentTransactionsCard.setOnClickListener {
             val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation)
             bottomNav.selectedItemId = R.id.nav_transactions
         }
+    }
 
+    private fun updateAllData() {
+        updateCategoryTiles()
+        updateTotalAmounts()
         updateRecentTransactions()
+    }
+
+    private fun updateCategoryTiles() {
+        val transactions = transactionManager.getTransactions()
+        
+        // Reset all amounts to zero
+        categoryAmounts.values.forEach { it.text = "$0" }
+
+        // Group transactions by category and calculate totals
+        val categoryTotals = transactions.groupBy { 
+            it.category.lowercase()
+        }.mapValues { (_, transactions) ->
+            transactions.sumOf { it.amount }
+        }
+
+        // Update each category tile with its total
+        categoryTotals.forEach { (category, total) ->
+            categoryAmounts[category]?.text = "$${String.format("%.2f", total)}"
+        }
+    }
+
+    private fun updateTotalAmounts() {
+        val transactions = transactionManager.getTransactions()
+        
+        val totalSpending = transactions
+            .filter { it.isExpense }
+            .sumOf { it.amount }
+
+        val totalIncome = transactions
+            .filter { !it.isExpense }
+            .sumOf { it.amount }
+
+        spendingTitleText.text = "Spending $${String.format("%.2f", totalSpending)}"
+        incomeTitleText.text = "Income $${String.format("%.2f", totalIncome)}"
     }
 
     override fun onResume() {
         super.onResume()
-        updateRecentTransactions()
+        updateAllData()
     }
 
     private fun updateRecentTransactions() {

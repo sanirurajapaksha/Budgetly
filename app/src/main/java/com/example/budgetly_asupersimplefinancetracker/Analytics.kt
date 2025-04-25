@@ -6,17 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.ProgressBar
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.charts.BarChart
-import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.PercentFormatter
-import com.github.mikephil.charting.renderer.XAxisRenderer
-import com.github.mikephil.charting.utils.ColorTemplate
-import java.util.*
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -28,6 +24,7 @@ private const val ARG_PARAM2 = "param2"
  * Use the [Analytics.newInstance] factory method to
  * create an instance of this fragment.
  */
+
 class Analytics : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
@@ -36,10 +33,11 @@ class Analytics : Fragment() {
     private lateinit var transactionManager: TransactionManager
     private lateinit var pieChart: PieChart
     private lateinit var barChart: BarChart
-    private lateinit var lineChart: LineChart
     private lateinit var totalSpendingText: TextView
     private lateinit var totalIncomeText: TextView
     private lateinit var savingsRateText: TextView
+    private lateinit var expenseRatioBar: ProgressBar
+    private lateinit var expenseRatioText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,10 +68,11 @@ class Analytics : Fragment() {
     private fun initializeViews(view: View) {
         pieChart = view.findViewById(R.id.category_pie_chart)
         barChart = view.findViewById(R.id.monthly_bar_chart)
-        lineChart = view.findViewById(R.id.trend_line_chart)
         totalSpendingText = view.findViewById(R.id.total_spending_text)
         totalIncomeText = view.findViewById(R.id.total_income_text)
         savingsRateText = view.findViewById(R.id.savings_rate_text)
+        expenseRatioBar = view.findViewById(R.id.expense_ratio_bar)
+        expenseRatioText = view.findViewById(R.id.expense_ratio_text)
     }
 
     private fun setupCharts() {
@@ -99,14 +98,8 @@ class Analytics : Fragment() {
             legend.isEnabled = true
         }
 
-        // Setup Line Chart
-        lineChart.apply {
-            description.isEnabled = false
-            xAxis.setDrawGridLines(false)
-            axisLeft.setDrawGridLines(false)
-            axisRight.isEnabled = false
-            legend.isEnabled = true
-        }
+        // Setup Progress Bar
+        expenseRatioBar.max = 100
     }
 
     private fun updateAnalytics() {
@@ -172,13 +165,27 @@ class Analytics : Fragment() {
             .filter { it.isExpense }
             .sumOf { it.amount }
 
-        val savingsRate = if (totalIncome > 0) {
-            ((totalIncome - totalExpense) / totalIncome * 100).toInt()
+        val expenseRatio = if (totalIncome > 0) {
+            (totalExpense / totalIncome * 100).toInt()
         } else 0
+
+        val savingsRate = 100 - expenseRatio
 
         totalIncomeText.text = "Total Income: $${String.format("%.2f", totalIncome)}"
         totalSpendingText.text = "Total Spending: $${String.format("%.2f", totalExpense)}"
         savingsRateText.text = "Savings Rate: $savingsRate%"
+        
+        // Update progress bar and its text
+        expenseRatioBar.progress = expenseRatio
+        expenseRatioText.text = "Expense Ratio: $expenseRatio%"
+
+        // Update progress bar color based on ratio
+        val colorResId = when {
+            expenseRatio > 90 -> android.R.color.holo_red_light
+            expenseRatio > 75 -> android.R.color.holo_orange_light
+            else -> android.R.color.holo_green_light
+        }
+        expenseRatioBar.progressTintList = ContextCompat.getColorStateList(requireContext(), colorResId)
     }
 
     private fun getCustomColors(): List<Int> {
