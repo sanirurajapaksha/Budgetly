@@ -1,5 +1,6 @@
 package com.example.budgetly_asupersimplefinancetracker
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,11 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import android.widget.ImageView
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import android.graphics.Color
+import android.content.res.ColorStateList
+import java.util.*
+import java.text.SimpleDateFormat
+import android.widget.ProgressBar
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -32,6 +38,10 @@ class Overview : Fragment() {
     private lateinit var spendingTitleText: TextView
     private lateinit var incomeTitleText: TextView
     private lateinit var categoryAmounts: Map<String, TextView>
+    private lateinit var budgetAmountText: TextView
+    private lateinit var remainingAmountText: TextView
+    private lateinit var budgetProgressBar: ProgressBar
+    private lateinit var budgetWarningText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,6 +85,11 @@ class Overview : Fragment() {
             "salary" to view.findViewById(R.id.salary_amount),
             "investment" to view.findViewById(R.id.investment_amount)
         )
+
+        budgetAmountText = view.findViewById(R.id.budget_amount_text)
+        remainingAmountText = view.findViewById(R.id.remaining_amount_text)
+        budgetProgressBar = view.findViewById(R.id.budget_progress_bar)
+        budgetWarningText = view.findViewById(R.id.budget_warning_text)
     }
 
     private fun setupClickListeners() {
@@ -88,6 +103,7 @@ class Overview : Fragment() {
         updateCategoryTiles()
         updateTotalAmounts()
         updateRecentTransactions()
+        updateBudgetStatus()
     }
 
     private fun updateCategoryTiles() {
@@ -122,6 +138,63 @@ class Overview : Fragment() {
 
         spendingTitleText.text = "Spending $${String.format("%.2f", totalSpending)}"
         incomeTitleText.text = "Income $${String.format("%.2f", totalIncome)}"
+    }
+
+    private fun updateBudgetStatus() {
+        val monthlyBudget = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .getFloat("monthly_budget", 0f)
+        
+        val currentMonthExpenses = calculateCurrentMonthExpenses()
+        val remainingAmount = monthlyBudget - currentMonthExpenses
+        
+        // Update UI
+        budgetAmountText.text = "Monthly Budget: $${String.format("%.2f", monthlyBudget)}"
+        remainingAmountText.text = "Remaining: $${String.format("%.2f", remainingAmount)}"
+        
+        // Calculate progress percentage
+        val progressPercentage = (currentMonthExpenses / monthlyBudget * 100).toInt()
+        budgetProgressBar.progress = progressPercentage
+        
+        // Update progress bar color and show warning based on remaining amount
+        when {
+            progressPercentage >= 90 -> {
+                budgetProgressBar.progressTintList = ColorStateList.valueOf(Color.RED)
+                budgetWarningText.apply {
+                    text = "Warning: Budget almost exceeded!"
+                    visibility = View.VISIBLE
+                }
+            }
+            progressPercentage >= 75 -> {
+                budgetProgressBar.progressTintList = ColorStateList.valueOf(Color.parseColor("#FFA500"))
+                budgetWarningText.apply {
+                    text = "Warning: Approaching budget limit"
+                    visibility = View.VISIBLE
+                }
+            }
+            else -> {
+                budgetProgressBar.progressTintList = ColorStateList.valueOf(Color.parseColor("#4CAF50"))
+                budgetWarningText.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun calculateCurrentMonthExpenses(): Float {
+        val calendar = Calendar.getInstance()
+        val currentMonth = calendar.get(Calendar.MONTH)
+        val currentYear = calendar.get(Calendar.YEAR)
+        
+        return transactionManager.getTransactions()
+            .filter { transaction -> 
+                val transactionDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                    .parse(transaction.date)
+                val transactionCalendar = Calendar.getInstance().apply { time = transactionDate }
+                
+                transaction.isExpense &&
+                transactionCalendar.get(Calendar.MONTH) == currentMonth &&
+                transactionCalendar.get(Calendar.YEAR) == currentYear
+            }
+            .sumOf { it.amount }
+            .toFloat()
     }
 
     override fun onResume() {

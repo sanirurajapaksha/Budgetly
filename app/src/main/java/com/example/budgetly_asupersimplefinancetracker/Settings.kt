@@ -1,5 +1,6 @@
 package com.example.budgetly_asupersimplefinancetracker
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import java.io.*
@@ -32,6 +34,8 @@ class Settings : Fragment() {
     private lateinit var backupButton: MaterialButton
     private lateinit var restoreButton: MaterialButton
     private lateinit var lastBackupText: TextView
+    private lateinit var budgetEditText: TextInputEditText
+    private lateinit var saveBudgetButton: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,12 +60,15 @@ class Settings : Fragment() {
         initializeViews(view)
         setupClickListeners()
         updateLastBackupDate()
+        loadSavedBudget()
     }
 
     private fun initializeViews(view: View) {
         backupButton = view.findViewById(R.id.backup_button)
         restoreButton = view.findViewById(R.id.restore_button)
         lastBackupText = view.findViewById(R.id.last_backup_text)
+        budgetEditText = view.findViewById(R.id.budget_edit_text)
+        saveBudgetButton = view.findViewById(R.id.save_budget_button)
     }
 
     private fun setupClickListeners() {
@@ -72,6 +79,10 @@ class Settings : Fragment() {
         restoreButton.setOnClickListener {
             restoreUserData()
         }
+
+        saveBudgetButton.setOnClickListener {
+            saveBudget()
+        }
     }
 
     private fun backupUserData() {
@@ -79,11 +90,16 @@ class Settings : Fragment() {
             // Get all transactions
             val transactions = transactionManager.getTransactions()
             
+            // Get budget data
+            val monthlyBudget = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+                .getFloat("monthly_budget", 0f)
+
             // Create backup data object
             val backupData = JsonObject().apply {
                 addProperty("backupDate", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
                 addProperty("userName", "John Doe") // Sample user name
                 add("transactions", Gson().toJsonTree(transactions))
+                addProperty("monthlyBudget", monthlyBudget) // Add budget to backup
                 // Add any other settings data here
                 addProperty("preferredCurrency", "$") // Sample currency
             }
@@ -96,7 +112,7 @@ class Settings : Fragment() {
             FileWriter(file).use { it.write(jsonString) }
 
             // Save backup date
-            requireContext().getSharedPreferences("settings", 0).edit()
+            requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
                 .putLong("last_backup_time", System.currentTimeMillis())
                 .apply()
 
@@ -128,8 +144,17 @@ class Settings : Fragment() {
             transactionManager.clearAllTransactions()
             transactions.forEach { transactionManager.saveTransaction(it) }
 
-            // Restore other settings here
-            // For example, preferred currency
+            // Restore budget
+            val monthlyBudget = backupData.get("monthlyBudget").asFloat
+            requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+                .edit()
+                .putFloat("monthly_budget", monthlyBudget)
+                .apply()
+
+            // Update budget input field
+            budgetEditText.setText(String.format("%.2f", monthlyBudget))
+
+            // Restore other settings here if needed
             val preferredCurrency = backupData.get("preferredCurrency").asString
             // Save preferred currency to settings...
 
@@ -150,6 +175,30 @@ class Settings : Fragment() {
             lastBackupText.text = "Last backup: $dateString"
         } else {
             lastBackupText.text = "No backup yet"
+        }
+    }
+
+    private fun saveBudget() {
+        val budgetText = budgetEditText.text.toString()
+        if (budgetText.isNotEmpty()) {
+            try {
+                val budget = budgetText.toDouble()
+                requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+                    .edit()
+                    .putFloat("monthly_budget", budget.toFloat())
+                    .apply()
+                Toast.makeText(context, "Budget saved successfully", Toast.LENGTH_SHORT).show()
+            } catch (e: NumberFormatException) {
+                Toast.makeText(context, "Please enter a valid amount", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun loadSavedBudget() {
+        val budget = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .getFloat("monthly_budget", 0f)
+        if (budget > 0) {
+            budgetEditText.setText(String.format("%.2f", budget))
         }
     }
 
