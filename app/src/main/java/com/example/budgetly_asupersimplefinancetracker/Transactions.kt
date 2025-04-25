@@ -63,6 +63,21 @@ class Transactions : Fragment() {
         adapter = TransactionsAdapter(requireContext(), emptyList())
         recyclerView.adapter = adapter
 
+        // Set up click listener for transactions
+        adapter.setOnTransactionClickListener(object : TransactionsAdapter.OnTransactionClickListener {
+            override fun onTransactionClick(transaction: Transaction) {
+                val intent = Intent(context, AddTransactionActivity::class.java).apply {
+                    putExtra("transaction_id", transaction.id)
+                    putExtra("title", transaction.title)
+                    putExtra("amount", transaction.amount)
+                    putExtra("date", transaction.date)
+                    putExtra("category", transaction.category)
+                    putExtra("is_expense", transaction.isExpense)
+                }
+                startActivity(intent)
+            }
+        })
+
         // Set up swipe to delete
         val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
             override fun onMove(
@@ -87,7 +102,7 @@ class Transactions : Fragment() {
                 val updatedTransactions = transactionManager.getTransactions()
                 adapter.updateTransactions(updatedTransactions)
 
-                // Show undo snackbar
+                // Show undo snack bar
                 Snackbar.make(recyclerView, "Transaction deleted", Snackbar.LENGTH_LONG)
                     .setAction("Undo") {
                         // Restore the transaction

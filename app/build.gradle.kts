@@ -51,4 +51,5 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.gson)
     implementation(libs.recyclerview.swipedecorator)
+    implementation (libs.mpandroidchart)
 }

@@ -1,10 +1,16 @@
 package com.example.budgetly_asupersimplefinancetracker
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.google.android.material.card.MaterialCardView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import android.widget.ImageView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -20,6 +26,9 @@ class Overview : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
+    private lateinit var transactionManager: TransactionManager
+    private lateinit var recentTransactionsContainer: ViewGroup
+    private lateinit var recentTransactionsCard: MaterialCardView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +44,71 @@ class Overview : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_overview, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        transactionManager = TransactionManager(requireContext())
+        recentTransactionsContainer = view.findViewById(R.id.recent_transactions_container)
+        recentTransactionsCard = view.findViewById(R.id.recent_transactions_card)
+
+        // Set click listener to navigate to Transactions tab using bottom navigation
+        recentTransactionsCard.setOnClickListener {
+            val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation)
+            bottomNav.selectedItemId = R.id.nav_transactions
+        }
+
+        updateRecentTransactions()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateRecentTransactions()
+    }
+
+    private fun updateRecentTransactions() {
+        recentTransactionsContainer.removeAllViews()
+        val transactions = transactionManager.getTransactions().take(3)
+
+        if (transactions.isEmpty()) {
+            val emptyText = TextView(requireContext()).apply {
+                text = "No recent transactions"
+                setTextColor(ContextCompat.getColor(requireContext(), android.R.color.darker_gray))
+            }
+            recentTransactionsContainer.addView(emptyText)
+            return
+        }
+
+        transactions.forEach { transaction ->
+            val transactionView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.item_transaction, recentTransactionsContainer, false)
+
+            // Set transaction data
+            transactionView.findViewById<TextView>(R.id.transaction_title).text = transaction.title
+            transactionView.findViewById<TextView>(R.id.transaction_date).text = transaction.date
+            transactionView.findViewById<TextView>(R.id.transaction_amount).apply {
+                text = if (transaction.isExpense) "-$%.2f".format(transaction.amount) else "+$%.2f".format(transaction.amount)
+                setTextColor(ContextCompat.getColor(requireContext(), 
+                    if (transaction.isExpense) android.R.color.holo_red_light else android.R.color.holo_green_dark))
+            }
+
+            // Set category icon
+            val iconResId = when (transaction.category.lowercase()) {
+                "food & drink" -> R.drawable.food
+                "transportation" -> R.drawable.transport
+                "housing" -> R.drawable.house
+                "personal care" -> R.drawable.personal_care
+                "shopping" -> R.drawable.shopping
+                "health care" -> R.drawable.health
+                "salary" -> R.drawable.salary
+                "investment" -> R.drawable.investment
+                else -> R.drawable.shopping
+            }
+            transactionView.findViewById<ImageView>(R.id.category_icon).setImageResource(iconResId)
+
+            recentTransactionsContainer.addView(transactionView)
+        }
     }
 
     companion object {

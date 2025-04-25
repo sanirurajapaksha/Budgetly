@@ -21,6 +21,16 @@ data class Transaction(
 class TransactionsAdapter(private val context: Context, private var transactions: List<Transaction>) :
     RecyclerView.Adapter<TransactionsAdapter.TransactionViewHolder>() {
 
+    interface OnTransactionClickListener {
+        fun onTransactionClick(transaction: Transaction)
+    }
+
+    private var clickListener: OnTransactionClickListener? = null
+
+    fun setOnTransactionClickListener(listener: OnTransactionClickListener) {
+        this.clickListener = listener
+    }
+
     // ViewHolder that hold the basic layout for each items
 
     class TransactionViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -59,15 +69,22 @@ class TransactionsAdapter(private val context: Context, private var transactions
 
         // Set category icon based on category
         val iconResId = when (transaction.category.lowercase()) {
-            "food" -> R.drawable.food
-            "transport" -> R.drawable.transport
+            "food & drink" -> R.drawable.food
+            "transportation" -> R.drawable.transport
             "housing" -> R.drawable.house
-            "personal" -> R.drawable.personal_care
+            "personal care" -> R.drawable.personal_care
             "shopping" -> R.drawable.shopping
-            "health" -> R.drawable.health
+            "health care" -> R.drawable.health
+            "salary" -> R.drawable.salary
+            "investment" -> R.drawable.investment
             else -> R.drawable.shopping
         }
         holder.categoryIcon.setImageResource(iconResId)
+
+        // Set click listener
+        holder.itemView.setOnClickListener {
+            clickListener?.onTransactionClick(transaction)
+        }
     }
 
     override fun getItemCount() = transactions.size

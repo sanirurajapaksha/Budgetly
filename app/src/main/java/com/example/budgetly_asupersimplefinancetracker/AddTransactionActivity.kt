@@ -37,6 +37,34 @@ class AddTransactionActivity : AppCompatActivity() {
         setupDatePicker()
         setupTypeToggle()
         setupAddTransactionButton()
+
+        // Check if we're editing an existing transaction
+        val transactionId = intent.getStringExtra("transaction_id")
+        if (transactionId != null) {
+            // We're editing an existing transaction
+            toolbar.title = "Edit Transaction"
+            addTransactionButton.text = "Update Transaction"
+
+            // Populate fields with existing transaction data
+            titleEditText.setText(intent.getStringExtra("title"))
+            amountEditText.setText(intent.getDoubleExtra("amount", 0.0).toString())
+            categoryDropdown.setText(intent.getStringExtra("category"))
+            dateEditText.setText(intent.getStringExtra("date"))
+            typeToggleGroup.check(if (intent.getBooleanExtra("is_expense", true)) R.id.expense_button else R.id.income_button)
+
+            // Parse the date string to set the calendar
+            val dateString = intent.getStringExtra("date")
+            if (dateString != null) {
+                try {
+                    val parsedDate = dateFormatter.parse(dateString)
+                    if (parsedDate != null) {
+                        calendar.time = parsedDate
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
 
     private fun initializeViews() {
@@ -118,7 +146,9 @@ class AddTransactionActivity : AppCompatActivity() {
         }
 
         try {
+            val transactionId = intent.getStringExtra("transaction_id")
             val transaction = Transaction(
+                id = transactionId ?: System.currentTimeMillis().toString(),
                 title = title,
                 amount = amount.toDouble(),
                 date = dateFormatter.format(calendar.time),
@@ -126,8 +156,13 @@ class AddTransactionActivity : AppCompatActivity() {
                 isExpense = typeToggleGroup.checkedButtonId == R.id.expense_button
             )
 
+            if (transactionId != null) {
+                // Delete the old transaction if we're editing
+                transactionManager.deleteTransaction(transactionId)
+            }
+
             transactionManager.saveTransaction(transaction)
-            Toast.makeText(this, "Transaction saved successfully", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, if (transactionId != null) "Transaction updated successfully" else "Transaction saved successfully", Toast.LENGTH_SHORT).show()
             finish()
         } catch (e: NumberFormatException) {
             Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show()
