@@ -32,4 +32,8 @@ class TransactionManager(private val context: Context) {
         val json = gson.toJson(transactions)
         sharedPreferences.edit().putString(transactionsKey, json).apply()
     }
+
+    fun clearAllTransactions() {
+        sharedPreferences.edit().putString(transactionsKey, "[]").apply()
+    }
 } 
