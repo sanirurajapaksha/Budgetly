@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -36,6 +38,16 @@ class Settings : Fragment() {
     private lateinit var lastBackupText: TextView
     private lateinit var budgetEditText: TextInputEditText
     private lateinit var saveBudgetButton: MaterialButton
+    private lateinit var currencyDropdown: AutoCompleteTextView
+
+    // Define supported currencies
+    private val supportedCurrencies = listOf(
+        "USD ($)",
+        "EUR (€)",
+        "GBP (£)",
+        "JPY (¥)",
+        "INR (₹)"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +71,7 @@ class Settings : Fragment() {
         transactionManager = TransactionManager(requireContext())
         initializeViews(view)
         setupClickListeners()
+        setupCurrencyDropdown()
         updateLastBackupDate()
         loadSavedBudget()
     }
@@ -69,6 +82,7 @@ class Settings : Fragment() {
         lastBackupText = view.findViewById(R.id.last_backup_text)
         budgetEditText = view.findViewById(R.id.budget_edit_text)
         saveBudgetButton = view.findViewById(R.id.save_budget_button)
+        currencyDropdown = view.findViewById(R.id.currency_dropdown)
     }
 
     private fun setupClickListeners() {
@@ -83,6 +97,29 @@ class Settings : Fragment() {
         saveBudgetButton.setOnClickListener {
             saveBudget()
         }
+
+        currencyDropdown.setOnItemClickListener { _, _, position, _ ->
+            val selectedCurrency = supportedCurrencies[position]
+            savePreferredCurrency(selectedCurrency)
+        }
+    }
+
+    private fun setupCurrencyDropdown() {
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, supportedCurrencies)
+        currencyDropdown.setAdapter(adapter)
+        
+        // Load saved currency
+        val savedCurrency = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .getString("preferred_currency", "USD ($)")
+        currencyDropdown.setText(savedCurrency, false)
+    }
+
+    private fun savePreferredCurrency(currency: String) {
+        requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .edit()
+            .putString("preferred_currency", currency)
+            .apply()
+        Toast.makeText(context, "Currency preference saved", Toast.LENGTH_SHORT).show()
     }
 
     private fun backupUserData() {
@@ -94,14 +131,17 @@ class Settings : Fragment() {
             val monthlyBudget = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
                 .getFloat("monthly_budget", 0f)
 
+            // Get preferred currency
+            val preferredCurrency = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+                .getString("preferred_currency", "USD ($)")
+
             // Create backup data object
             val backupData = JsonObject().apply {
                 addProperty("backupDate", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
-                addProperty("userName", "John Doe") // Sample user name
+                addProperty("userName", "John Doe")
                 add("transactions", Gson().toJsonTree(transactions))
-                addProperty("monthlyBudget", monthlyBudget) // Add budget to backup
-                // Add any other settings data here
-                addProperty("preferredCurrency", "$") // Sample currency
+                addProperty("monthlyBudget", monthlyBudget)
+                addProperty("preferredCurrency", preferredCurrency)
             }
 
             // Convert to JSON string
@@ -154,9 +194,15 @@ class Settings : Fragment() {
             // Update budget input field
             budgetEditText.setText(String.format("%.2f", monthlyBudget))
 
-            // Restore other settings here if needed
+            // Restore preferred currency
             val preferredCurrency = backupData.get("preferredCurrency").asString
-            // Save preferred currency to settings...
+            requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+                .edit()
+                .putString("preferred_currency", preferredCurrency)
+                .apply()
+
+            // Update currency dropdown
+            currencyDropdown.setText(preferredCurrency, false)
 
             Toast.makeText(context, "Restore completed successfully", Toast.LENGTH_SHORT).show()
 

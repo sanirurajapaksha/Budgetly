@@ -34,6 +34,7 @@ class Transactions : Fragment() {
     private lateinit var fabAddTransaction: FloatingActionButton
     private lateinit var transactionManager: TransactionManager
     private lateinit var adapter: TransactionsAdapter
+    private lateinit var budgetNotificationManager: BudgetNotificationManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +58,7 @@ class Transactions : Fragment() {
         recyclerView = view.findViewById(R.id.transactions_recycler_view)
         fabAddTransaction = view.findViewById(R.id.fab_add_transaction)
         transactionManager = TransactionManager(requireContext())
+        budgetNotificationManager = BudgetNotificationManager(requireContext())
 
         // Set up RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
@@ -161,6 +163,9 @@ class Transactions : Fragment() {
         // Refresh the list when returning from AddTransactionActivity
         val transactions = transactionManager.getTransactions()
         adapter.updateTransactions(transactions)
+        
+        // Check budget status and send notifications if needed
+        budgetNotificationManager.checkAndNotifyBudgetStatus(transactionManager)
     }
 
     companion object {
