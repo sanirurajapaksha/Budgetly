@@ -1,5 +1,6 @@
 package com.example.budgetly_asupersimplefinancetracker
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Canvas
 import android.os.Bundle
@@ -29,12 +30,12 @@ class Transactions : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
-
     private lateinit var recyclerView: RecyclerView
     private lateinit var fabAddTransaction: FloatingActionButton
     private lateinit var transactionManager: TransactionManager
     private lateinit var adapter: TransactionsAdapter
     private lateinit var budgetNotificationManager: BudgetNotificationManager
+    private lateinit var userEmail: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,15 +56,22 @@ class Transactions : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        recyclerView = view.findViewById(R.id.transactions_recycler_view)
-        fabAddTransaction = view.findViewById(R.id.fab_add_transaction)
+        // Get user email from SharedPreferences
+        userEmail = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            .getString("user_email", "") ?: ""
+
         transactionManager = TransactionManager(requireContext())
         budgetNotificationManager = BudgetNotificationManager(requireContext())
 
         // Set up RecyclerView
+        recyclerView = view.findViewById(R.id.transactions_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
         adapter = TransactionsAdapter(requireContext(), emptyList())
         recyclerView.adapter = adapter
+
+        // Get transactions from SharedPreferences
+        val transactions = transactionManager.getTransactions(userEmail)
+        adapter.updateTransactions(transactions)
 
         // Set up click listener for transactions
         adapter.setOnTransactionClickListener(object : TransactionsAdapter.OnTransactionClickListener {
@@ -91,17 +99,16 @@ class Transactions : Fragment() {
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-
-                // Get the position of the item being swiped and then get the ID of it to delete from SharedPreferences
+                // Get the position of the item being swiped
                 val position = viewHolder.adapterPosition
-                val transactions = transactionManager.getTransactions()
+                val transactions = transactionManager.getTransactions(userEmail)
                 val transaction = transactions[position]
                 
                 // Delete from SharedPreferences
-                transactionManager.deleteTransaction(transaction.id)
+                transactionManager.deleteTransaction(transaction.id, userEmail)
                 
                 // Update adapter with new list
-                val updatedTransactions = transactionManager.getTransactions()
+                val updatedTransactions = transactionManager.getTransactions(userEmail)
                 adapter.updateTransactions(updatedTransactions)
 
                 // Show undo snack bar
@@ -109,14 +116,13 @@ class Transactions : Fragment() {
                     .setAction("Undo") {
                         // Restore the transaction
                         transactionManager.saveTransaction(transaction)
-                        val restoredTransactions = transactionManager.getTransactions()
+                        val restoredTransactions = transactionManager.getTransactions(userEmail)
                         adapter.updateTransactions(restoredTransactions)
                     }
                     .show()
             }
 
             // Handles the red background with the trash icon on swipe
-
             override fun onChildDraw(
                 c: Canvas,
                 recyclerView: RecyclerView,
@@ -147,11 +153,8 @@ class Transactions : Fragment() {
         val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
-        // Get transactions from SharedPreferences
-        val transactions = transactionManager.getTransactions()
-        adapter.updateTransactions(transactions)
-
         // Handle FAB click
+        fabAddTransaction = view.findViewById(R.id.fab_add_transaction)
         fabAddTransaction.setOnClickListener {
             val intent = Intent(context, AddTransactionActivity::class.java)
             startActivity(intent)
@@ -161,7 +164,7 @@ class Transactions : Fragment() {
     override fun onResume() {
         super.onResume()
         // Refresh the list when returning from AddTransactionActivity
-        val transactions = transactionManager.getTransactions()
+        val transactions = transactionManager.getTransactions(userEmail)
         adapter.updateTransactions(transactions)
         
         // Check budget status and send notifications if needed

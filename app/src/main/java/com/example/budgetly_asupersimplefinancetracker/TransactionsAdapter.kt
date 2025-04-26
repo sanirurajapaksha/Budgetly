@@ -15,7 +15,8 @@ data class Transaction(
     val amount: Double,
     val date: String,
     val category: String,
-    val isExpense: Boolean = true
+    val isExpense: Boolean = true,
+    val userEmail: String
 )
 
 class TransactionsAdapter(private val context: Context, private var transactions: List<Transaction>) :

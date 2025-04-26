@@ -13,6 +13,7 @@ import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.PercentFormatter
+import android.content.Context
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -29,8 +30,8 @@ class Analytics : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
-
     private lateinit var transactionManager: TransactionManager
+    private lateinit var userEmail: String
     private lateinit var pieChart: PieChart
     private lateinit var barChart: BarChart
     private lateinit var totalSpendingText: TextView
@@ -58,6 +59,10 @@ class Analytics : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Get user email from SharedPreferences
+        userEmail = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            .getString("user_email", "") ?: ""
+            
         transactionManager = TransactionManager(requireContext())
         
         initializeViews(view)
@@ -103,7 +108,7 @@ class Analytics : Fragment() {
     }
 
     private fun updateAnalytics() {
-        val transactions = transactionManager.getTransactions()
+        val transactions = transactionManager.getTransactions(userEmail)
         updateCategoryAnalysis(transactions)
         updateMonthlyTrends(transactions)
         updateIncomeVsExpense(transactions)

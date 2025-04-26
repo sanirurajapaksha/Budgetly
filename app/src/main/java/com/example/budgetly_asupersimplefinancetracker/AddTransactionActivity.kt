@@ -22,6 +22,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var dateEditText: TextInputEditText
     private lateinit var addTransactionButton: MaterialButton
     private lateinit var transactionManager: TransactionManager
+    private lateinit var userEmail: String
 
     private val calendar = Calendar.getInstance()
     private val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -29,6 +30,10 @@ class AddTransactionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
+
+        // Get user email from SharedPreferences
+        userEmail = getSharedPreferences("user_prefs", MODE_PRIVATE)
+            .getString("user_email", "") ?: ""
 
         transactionManager = TransactionManager(this)
         initializeViews()
@@ -153,12 +158,13 @@ class AddTransactionActivity : AppCompatActivity() {
                 amount = amount.toDouble(),
                 date = dateFormatter.format(calendar.time),
                 category = category,
-                isExpense = typeToggleGroup.checkedButtonId == R.id.expense_button
+                isExpense = typeToggleGroup.checkedButtonId == R.id.expense_button,
+                userEmail = userEmail
             )
 
             if (transactionId != null) {
                 // Delete the old transaction if we're editing
-                transactionManager.deleteTransaction(transactionId)
+                transactionManager.deleteTransaction(transactionId, userEmail)
             }
 
             transactionManager.saveTransaction(transaction)

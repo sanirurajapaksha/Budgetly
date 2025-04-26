@@ -25,6 +25,8 @@ class BudgetNotificationManager(private val context: Context) {
     private val currentMonth = monthFormat.format(Date())
     private val TAG = "BudgetNotificationManager"
     private val prefs: SharedPreferences = context.getSharedPreferences("notification_state", Context.MODE_PRIVATE)
+    private val userEmail = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        .getString("user_email", "") ?: ""
 
     init {
         createNotificationChannel()
@@ -86,7 +88,7 @@ class BudgetNotificationManager(private val context: Context) {
             return
         }
 
-        val transactions = transactionManager.getTransactions()
+        val transactions = transactionManager.getTransactions(userEmail)
         Log.d(TAG, "Total transactions count: ${transactions.size}")
 
         val currentMonthTransactions = transactions.filter { 

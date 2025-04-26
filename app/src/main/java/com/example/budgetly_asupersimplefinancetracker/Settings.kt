@@ -39,6 +39,8 @@ class Settings : Fragment() {
     private lateinit var budgetEditText: TextInputEditText
     private lateinit var saveBudgetButton: MaterialButton
     private lateinit var currencyDropdown: AutoCompleteTextView
+    private lateinit var userNameText: TextView
+    private lateinit var userEmail: String
 
     // Define supported currencies
     private val supportedCurrencies = listOf(
@@ -68,6 +70,10 @@ class Settings : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Get user email from SharedPreferences
+        userEmail = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            .getString("user_email", "") ?: ""
+        
         transactionManager = TransactionManager(requireContext())
         initializeViews(view)
         setupClickListeners()
@@ -83,6 +89,12 @@ class Settings : Fragment() {
         budgetEditText = view.findViewById(R.id.budget_edit_text)
         saveBudgetButton = view.findViewById(R.id.save_budget_button)
         currencyDropdown = view.findViewById(R.id.currency_dropdown)
+        userNameText = view.findViewById(R.id.user_name_text)
+
+        // Set user name
+        val userName = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            .getString("user_name", "User")
+        userNameText.text = userName
     }
 
     private fun setupClickListeners() {
@@ -125,7 +137,7 @@ class Settings : Fragment() {
     private fun backupUserData() {
         try {
             // Get all transactions
-            val transactions = transactionManager.getTransactions()
+            val transactions = transactionManager.getTransactions(userEmail)
             
             // Get budget data
             val monthlyBudget = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -181,7 +193,7 @@ class Settings : Fragment() {
             val transactions = Gson().fromJson(transactionsArray, Array<Transaction>::class.java).toList()
             
             // Clear existing transactions and add restored ones
-            transactionManager.clearAllTransactions()
+            transactionManager.clearAllTransactions(userEmail)
             transactions.forEach { transactionManager.saveTransaction(it) }
 
             // Restore budget

@@ -33,6 +33,7 @@ class Overview : Fragment() {
     private var param1: String? = null
     private var param2: String? = null
     private lateinit var transactionManager: TransactionManager
+    private lateinit var userEmail: String
     private lateinit var recentTransactionsContainer: ViewGroup
     private lateinit var recentTransactionsCard: MaterialCardView
     private lateinit var spendingTitleText: TextView
@@ -61,6 +62,10 @@ class Overview : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Get user email from SharedPreferences
+        userEmail = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            .getString("user_email", "") ?: ""
 
         transactionManager = TransactionManager(requireContext())
         initializeViews(view)
@@ -107,7 +112,7 @@ class Overview : Fragment() {
     }
 
     private fun updateCategoryTiles() {
-        val transactions = transactionManager.getTransactions()
+        val transactions = transactionManager.getTransactions(userEmail)
         
         // Reset all amounts to zero
         categoryAmounts.values.forEach { it.text = "$0" }
@@ -126,7 +131,7 @@ class Overview : Fragment() {
     }
 
     private fun updateTotalAmounts() {
-        val transactions = transactionManager.getTransactions()
+        val transactions = transactionManager.getTransactions(userEmail)
         
         val totalSpending = transactions
             .filter { it.isExpense }
@@ -179,19 +184,15 @@ class Overview : Fragment() {
     }
 
     private fun calculateCurrentMonthExpenses(): Float {
-        val calendar = Calendar.getInstance()
-        val currentMonth = calendar.get(Calendar.MONTH)
-        val currentYear = calendar.get(Calendar.YEAR)
-        
-        return transactionManager.getTransactions()
+        return transactionManager.getTransactions(userEmail)
             .filter { transaction -> 
                 val transactionDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
                     .parse(transaction.date)
                 val transactionCalendar = Calendar.getInstance().apply { time = transactionDate }
                 
                 transaction.isExpense &&
-                transactionCalendar.get(Calendar.MONTH) == currentMonth &&
-                transactionCalendar.get(Calendar.YEAR) == currentYear
+                transactionCalendar.get(Calendar.MONTH) == Calendar.getInstance().get(Calendar.MONTH) &&
+                transactionCalendar.get(Calendar.YEAR) == Calendar.getInstance().get(Calendar.YEAR)
             }
             .sumOf { it.amount }
             .toFloat()
@@ -204,7 +205,7 @@ class Overview : Fragment() {
 
     private fun updateRecentTransactions() {
         recentTransactionsContainer.removeAllViews()
-        val transactions = transactionManager.getTransactions().take(3)
+        val transactions = transactionManager.getTransactions(userEmail).take(3)
 
         if (transactions.isEmpty()) {
             val emptyText = TextView(requireContext()).apply {

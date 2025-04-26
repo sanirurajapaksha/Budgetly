@@ -1,6 +1,7 @@
 package com.example.budgetly_asupersimplefinancetracker
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -25,6 +26,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check if user is logged in
+        val isLoggedIn = getSharedPreferences("user_prefs", MODE_PRIVATE)
+            .getBoolean("is_logged_in", false)
+
+        // Check if onboarding is completed
+        val isOnboardingCompleted = getSharedPreferences("onboarding", MODE_PRIVATE)
+            .getBoolean("completed", false)
+
+        if (!isLoggedIn || !isOnboardingCompleted) {
+            // If not logged in or onboarding not completed, redirect to OnboardingActivity
+            startActivity(Intent(this, OnboardingActivity::class.java))
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_main)
 
         // Remove default action bar
