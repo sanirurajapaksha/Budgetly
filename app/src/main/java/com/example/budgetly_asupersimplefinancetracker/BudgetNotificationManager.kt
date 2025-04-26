@@ -88,11 +88,6 @@ class BudgetNotificationManager(private val context: Context) {
 
         val transactions = transactionManager.getTransactions()
         Log.d(TAG, "Total transactions count: ${transactions.size}")
-        
-        // Log all transactions for debugging
-        transactions.forEach { transaction ->
-            Log.d(TAG, "Transaction: ${transaction.title}, Amount: ${transaction.amount}, Date: ${transaction.date}, IsExpense: ${transaction.isExpense}")
-        }
 
         val currentMonthTransactions = transactions.filter { 
             try {
