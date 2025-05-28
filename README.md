@@ -59,7 +59,7 @@ This project showcases proficiency in Kotlin and Android development:
 
 1.  Clone the repository:
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/sanirurajapaksha/Budgetly.git
     ```
 2.  Open the project in Android Studio.
 3.  Let Android Studio sync and download the necessary Gradle dependencies.
